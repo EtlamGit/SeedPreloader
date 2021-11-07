@@ -52,6 +52,7 @@ class SeedPreloader:
         # get configuration from config file
         config = configparser.ConfigParser()
         config.read('SeedPreloader.ini')
+        self.javaWin = config.get('Java', 'javaWindows').strip('"')
 
         self.minX = int(config.get('Bounds', 'minX', fallback=-5))
         self.minZ = int(config.get('Bounds', 'minZ', fallback=-5))
@@ -102,11 +103,11 @@ class SeedPreloader:
 
 
     def server_start(self):
-        java = 'java'
+        java_cmd = 'java'
         if (os.name == 'nt'):
-            java = 'C:/Program Files (x86)/Minecraft Launcher/runtime/java-runtime-alpha/windows-x64/java-runtime-alpha/bin/java.exe'
-        max_mem = '-Xmx{}G'.format(int(round(3/4 * psutil.virtual_memory().total / 1024 / 1024 / 1024)))
-        start_server_command = [java, max_mem, '-jar', 'minecraft_server.jar', '-nogui']
+            java_cmd = self.javaWin
+        java_mem = '-Xmx{}G'.format(int(round(3/4 * psutil.virtual_memory().total / 1024 / 1024 / 1024)))
+        start_server_command = [java_cmd, java_mem, '-jar', 'minecraft_server.jar', '-nogui']
         self.server = subprocess.Popen( start_server_command, cwd=self.server_folder,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                         bufsize=1, universal_newlines=True)
@@ -146,12 +147,13 @@ class SeedPreloader:
         if os.path.exists(self.server_folder):
             # found existing server installation -> continue?
             # read last status
-            with open(self.server_folder + '/status.log', 'rt') as status_file:
-                lines = status_file.readlines()
-                for line in lines:
-                    region = eval(line)
-                    if region in self.todo:
-                        self.todo.remove(region)
+            if os.path.isfile(self.server_folder + '/status.log'):
+                with open(self.server_folder + '/status.log', 'rt') as status_file:
+                    lines = status_file.readlines()
+                    for line in lines:
+                        region = eval(line)
+                        while region in self.todo:
+                            self.todo.remove(region)
             if (len(self.todo) > 0):
                 # append further stuff to status.log
                 self.status_file = open(self.server_folder + '/status.log', 'at', buffering=1)
