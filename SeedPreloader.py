@@ -150,6 +150,11 @@ class SeedPreloader:
             if os.path.isfile(self.server_folder + '/status.log'):
                 with open(self.server_folder + '/status.log', 'rt') as status_file:
                     lines = status_file.readlines()
+                    # remove newline
+                    lines = list(map(lambda x: x.strip(), lines))
+                    # remove empty lines
+                    while ('' in lines):
+                        lines.remove('')
                     for line in lines:
                         region = eval(line)
                         while region in self.todo:
