@@ -33,7 +33,10 @@ def java_string_hashcode(text):
     for i in range(n):
         h += ord(text[i]) * 31**(n-1-i)
 
-    return h % 2**32
+    h %= 2**32          # reduce to 32 bits
+    if (h > 2**31):     # convert uint32 -> int32
+        h -= 2**32
+    return h
 
 
 ################################################################################
